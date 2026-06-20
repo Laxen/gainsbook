@@ -19,7 +19,11 @@
       {% endif %}
     </div>
     <form method="post" action="{{ url_for('workout', r_id=r.id) }}">
+      {% if r.id in drafts %}
+      <button class="btn btn-start" type="submit">Continue Workout</button>
+      {% else %}
       <button class="btn btn-start" type="submit">Start Workout</button>
+      {% endif %}
     </form>
   </div>
   {% endfor %}

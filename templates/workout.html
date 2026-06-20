@@ -34,6 +34,7 @@
       placeholder="e.g. 8 7 5"
       autocomplete="off"
       inputmode="numeric"
+      value="{{ draft_entries.get(ex_id, {}).get('reps_str', '') }}"
     />
 
     <label for="comment_{{ ex_id }}" style="margin-top:0.6rem;">Comment</label>
@@ -41,7 +42,7 @@
       id="comment_{{ ex_id }}"
       name="comment_{{ ex_id }}"
       placeholder="Optional notes…"
-    ></textarea>
+    >{{ draft_entries.get(ex_id, {}).get('comment', '') }}</textarea>
   </div>
   {% endfor %}
 
@@ -49,10 +50,14 @@
   <div class="message" style="font-size:1rem; margin-bottom:0.5rem;">{{ message }}</div>
   {% endif %}
 
-  <button class="btn btn-primary" type="submit"
-    onclick="this.disabled=true; this.textContent='Saving…'; this.form.submit();">
-    Save Workout
-  </button>
+  <div class="row" style="margin-top:0.5rem; justify-content:flex-end; gap:0.6rem;">
+    <button class="btn btn-muted" name="action" value="save" type="submit">
+      Save Progress
+    </button>
+    <button class="btn btn-primary" name="action" value="finish" type="submit">
+      Finish Workout
+    </button>
+  </div>
 </form>
 {% endif %}
 {% endblock %}

@@ -78,6 +78,14 @@ def save_sessions(data):
     _save("sessions.json", data)
 
 
+def load_drafts():
+    return _load("drafts.json", {})
+
+
+def save_drafts(data):
+    _save("drafts.json", data)
+
+
 # ── lookup helpers ────────────────────────────────────────────────────────────
 
 def get_routine_by_id(routines, r_id):
@@ -104,7 +112,8 @@ def index():
     routines = load_routines()
     exercises = load_exercises()
     ex_map = {e["id"]: e["name"] for e in exercises}
-    return render_template("index.html", routines=routines, ex_map=ex_map)
+    drafts = load_drafts()
+    return render_template("index.html", routines=routines, ex_map=ex_map, drafts=drafts)
 
 
 # ── routes: exercises ─────────────────────────────────────────────────────────
@@ -214,34 +223,54 @@ def workout(r_id):
     all_routines = load_routines()
     exercises = load_exercises()
     sessions = load_sessions()
+    drafts = load_drafts()
     routine = get_routine_by_id(all_routines, r_id)
     if not routine:
         return redirect(url_for("index"))
 
     ex_map = {e["id"]: e["name"] for e in exercises}
-
     message = ""
+    draft_entries = drafts.get(r_id, {}).get("entries", {})
+
     if request.method == "POST":
-        entries = []
+        action = request.form.get("action", "finish")
+
+        # collect raw form values for every exercise
+        form_entries = {}
         for ex_id in routine["exercise_ids"]:
-            reps_raw = request.form.get(f"reps_{ex_id}", "").strip()
-            comment = request.form.get(f"comment_{ex_id}", "").strip()
-            reps = []
-            for part in reps_raw.split():
-                try:
-                    reps.append(int(part))
-                except ValueError:
-                    pass
-            entries.append({"exercise_id": ex_id, "reps": reps, "comment": comment})
-        session = {
-            "id": str(uuid.uuid4()),
-            "date": datetime.now().strftime("%Y-%m-%d"),
-            "routine_id": r_id,
-            "entries": entries,
-        }
-        sessions.append(session)
-        save_sessions(sessions)
-        message = "Workout saved!"
+            form_entries[ex_id] = {
+                "reps_str": request.form.get(f"reps_{ex_id}", "").strip(),
+                "comment": request.form.get(f"comment_{ex_id}", "").strip(),
+            }
+
+        if action == "save":
+            drafts[r_id] = {"entries": form_entries}
+            save_drafts(drafts)
+            draft_entries = form_entries
+            message = "Progress saved."
+        else:  # finish
+            entries = []
+            for ex_id in routine["exercise_ids"]:
+                d = form_entries.get(ex_id, {})
+                reps = []
+                for part in d.get("reps_str", "").split():
+                    try:
+                        reps.append(int(part))
+                    except ValueError:
+                        pass
+                entries.append({"exercise_id": ex_id, "reps": reps, "comment": d.get("comment", "")})
+            session = {
+                "id": str(uuid.uuid4()),
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "routine_id": r_id,
+                "entries": entries,
+            }
+            sessions.append(session)
+            save_sessions(sessions)
+            drafts.pop(r_id, None)
+            save_drafts(drafts)
+            draft_entries = {}
+            message = "Workout finished!"
 
     last = {
         ex_id: last_session_for_exercise(sessions, ex_id)
@@ -254,6 +283,7 @@ def workout(r_id):
         ex_map=ex_map,
         last=last,
         message=message,
+        draft_entries=draft_entries,
     )
 
 
