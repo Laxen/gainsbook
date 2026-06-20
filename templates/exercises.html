@@ -18,9 +18,9 @@
   <div class="card" style="margin-top:0.4rem;">
     <div class="row">
       <span style="flex:1; font-weight:500;">{{ ex.name }}</span>
-      <form method="post" action="/exercises/{{ ex.id }}/delete">
+      <form method="post" action="{{ url_for('delete_exercise', ex_id=ex.id) }}">
         <button class="btn btn-danger btn-sm" type="submit"
-          onclick="return confirm('Delete \'{{ ex.name }}\'? It will also be removed from all routines.')">
+          onclick="return confirm('Delete {{ ex.name }}? It will also be removed from all routines.')">
           Delete
         </button>
       </form>

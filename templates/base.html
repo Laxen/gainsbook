@@ -260,9 +260,9 @@
   <body>
     <main>
       <nav>
-        <a href="/">Home</a>
-        <a href="/exercises">Exercises</a>
-        <a href="/routines">Routines</a>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('exercises') }}">Exercises</a>
+        <a href="{{ url_for('routines') }}">Routines</a>
       </nav>
       {% block content %}{% endblock %}
     </main>

@@ -10,6 +10,29 @@ app = Flask(__name__)
 DATA_DIR = Path(os.environ.get("DATA_DIR", "/share/gainsbook"))
 
 
+class _IngressMiddleware:
+    """Set SCRIPT_NAME from the X-Ingress-Path header sent by Home Assistant.
+
+    This makes Flask's url_for() produce URLs that are relative to the
+    ingress base path (e.g. /api/hassio_ingress/<token>/) instead of /.
+    """
+
+    def __init__(self, wsgi_app):
+        self.wsgi_app = wsgi_app
+
+    def __call__(self, environ, start_response):
+        ingress_path = environ.get("HTTP_X_INGRESS_PATH", "").rstrip("/")
+        if ingress_path:
+            environ["SCRIPT_NAME"] = ingress_path
+            path_info = environ.get("PATH_INFO", "")
+            if path_info.startswith(ingress_path):
+                environ["PATH_INFO"] = path_info[len(ingress_path):] or "/"
+        return self.wsgi_app(environ, start_response)
+
+
+app.wsgi_app = _IngressMiddleware(app.wsgi_app)
+
+
 # ── storage helpers ───────────────────────────────────────────────────────────
 
 def _ensure_dir() -> None:

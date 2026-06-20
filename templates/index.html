@@ -5,7 +5,7 @@
 <p class="sub">Pick a routine to start logging.</p>
 
 {% if not routines %}
-  <p class="empty-state">No routines yet. <a href="/routines">Create one.</a></p>
+  <p class="empty-state">No routines yet. <a href="{{ url_for('routines') }}">Create one.</a></p>
 {% else %}
   {% for r in routines %}
   <div class="card">
@@ -18,7 +18,7 @@
         <span style="font-size:0.82rem; color:#5f6368;">No exercises added yet.</span>
       {% endif %}
     </div>
-    <form method="post" action="/workout/{{ r.id }}">
+    <form method="post" action="{{ url_for('workout', r_id=r.id) }}">
       <button class="btn btn-start" type="submit">Start Workout</button>
     </form>
   </div>

@@ -21,7 +21,7 @@
 <div class="card" style="margin-top:0.6rem;">
   <div class="row" style="margin-bottom:0.5rem;">
     <span class="card-title" style="flex:1; margin:0;">{{ r.name }}</span>
-    <form method="post" action="/routines/{{ r.id }}/delete">
+    <form method="post" action="{{ url_for('delete_routine', r_id=r.id) }}">
       <button class="btn btn-danger btn-sm" type="submit"
         onclick="return confirm('Delete routine \'{{ r.name }}\'?')">
         Delete
@@ -32,13 +32,13 @@
   {% for ex_id in r.exercise_ids %}
   <div class="exercise-row">
     <span class="exercise-row-name">{{ ex_map.get(ex_id, "?") }}</span>
-    <form method="post" action="/routines/{{ r.id }}/move_exercise/{{ ex_id }}/up">
+    <form method="post" action="{{ url_for('routine_move_exercise', r_id=r.id, ex_id=ex_id, direction='up') }}">
       <button class="btn-icon" type="submit" title="Move up">↑</button>
     </form>
-    <form method="post" action="/routines/{{ r.id }}/move_exercise/{{ ex_id }}/down">
+    <form method="post" action="{{ url_for('routine_move_exercise', r_id=r.id, ex_id=ex_id, direction='down') }}">
       <button class="btn-icon" type="submit" title="Move down">↓</button>
     </form>
-    <form method="post" action="/routines/{{ r.id }}/remove_exercise/{{ ex_id }}">
+    <form method="post" action="{{ url_for('routine_remove_exercise', r_id=r.id, ex_id=ex_id) }}">
       <button class="btn btn-danger btn-sm" type="submit" title="Remove from routine">✕</button>
     </form>
   </div>
@@ -58,7 +58,7 @@
 
   {% if ns.has_available %}
   <div class="add-exercise-row">
-    <form method="post" action="/routines/{{ r.id }}/add_exercise">
+      <form method="post" action="{{ url_for('routine_add_exercise', r_id=r.id) }}">
       <div class="row">
         <select name="exercise_id">
           {% for ex in exercises %}

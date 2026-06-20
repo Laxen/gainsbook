@@ -5,7 +5,7 @@
 <p class="sub">Enter reps per set separated by spaces, e.g. <strong>8 7 5</strong> for 3 sets.</p>
 
 {% if not routine.exercise_ids %}
-  <p class="empty-state">This routine has no exercises. <a href="/routines">Add some.</a></p>
+  <p class="empty-state">This routine has no exercises. <a href="{{ url_for('routines') }}">Add some.</a></p>
 {% else %}
 <form method="post">
   {% for ex_id in routine.exercise_ids %}
