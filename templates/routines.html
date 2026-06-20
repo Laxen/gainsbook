@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Routines – Gainsbook{% endblock %}
+{% block content %}
+<h1>Routines</h1>
+<p class="sub">Group exercises into routines and set their order.</p>
+
+<form method="post">
+  <label for="name">New routine</label>
+  <div class="row">
+    <input type="text" id="name" name="name" placeholder="e.g. Push Day" autocomplete="off" required />
+    <button class="btn btn-primary" type="submit">Add</button>
+  </div>
+  <div class="message">{{ message }}</div>
+</form>
+
+{% if not routines %}
+  <p class="empty-state" style="margin-top:1rem;">No routines yet.</p>
+{% endif %}
+
+{% for r in routines %}
+<div class="card" style="margin-top:0.6rem;">
+  <div class="row" style="margin-bottom:0.5rem;">
+    <span class="card-title" style="flex:1; margin:0;">{{ r.name }}</span>
+    <form method="post" action="/routines/{{ r.id }}/delete">
+      <button class="btn btn-danger btn-sm" type="submit"
+        onclick="return confirm('Delete routine \'{{ r.name }}\'?')">
+        Delete
+      </button>
+    </form>
+  </div>
+
+  {% for ex_id in r.exercise_ids %}
+  <div class="exercise-row">
+    <span class="exercise-row-name">{{ ex_map.get(ex_id, "?") }}</span>
+    <form method="post" action="/routines/{{ r.id }}/move_exercise/{{ ex_id }}/up">
+      <button class="btn-icon" type="submit" title="Move up">↑</button>
+    </form>
+    <form method="post" action="/routines/{{ r.id }}/move_exercise/{{ ex_id }}/down">
+      <button class="btn-icon" type="submit" title="Move down">↓</button>
+    </form>
+    <form method="post" action="/routines/{{ r.id }}/remove_exercise/{{ ex_id }}">
+      <button class="btn btn-danger btn-sm" type="submit" title="Remove from routine">✕</button>
+    </form>
+  </div>
+  {% endfor %}
+
+  {% if not r.exercise_ids %}
+  <p style="font-size:0.82rem; color:#5f6368; margin:0.4rem 0;">No exercises in this routine yet.</p>
+  {% endif %}
+
+  {# show add-exercise dropdown only if there are unassigned exercises #}
+  {% set ns = namespace(has_available=false) %}
+  {% for ex in exercises %}
+    {% if ex.id not in r.exercise_ids %}
+      {% set ns.has_available = true %}
+    {% endif %}
+  {% endfor %}
+
+  {% if ns.has_available %}
+  <div class="add-exercise-row">
+    <form method="post" action="/routines/{{ r.id }}/add_exercise">
+      <div class="row">
+        <select name="exercise_id">
+          {% for ex in exercises %}
+            {% if ex.id not in r.exercise_ids %}
+              <option value="{{ ex.id }}">{{ ex.name }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+        <button class="btn btn-muted btn-sm" type="submit">Add exercise</button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+</div>
+{% endfor %}
+{% endblock %}

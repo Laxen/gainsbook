@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ routine.name }} – Gainsbook{% endblock %}
+{% block content %}
+<h1>{{ routine.name }}</h1>
+<p class="sub">Enter reps per set separated by spaces, e.g. <strong>8 7 5</strong> for 3 sets.</p>
+
+{% if not routine.exercise_ids %}
+  <p class="empty-state">This routine has no exercises. <a href="/routines">Add some.</a></p>
+{% else %}
+<form method="post">
+  {% for ex_id in routine.exercise_ids %}
+  {% set ex_last = last.get(ex_id) %}
+  <div class="card">
+    <div class="card-title">{{ ex_map.get(ex_id, "?") }}</div>
+
+    {% if ex_last %}
+    <div class="last-session">
+      Last logged {{ ex_last.date }}:
+      <span class="last-reps">{{ ex_last.reps | join(" ") }}</span>
+      — {{ ex_last.reps | length }} set(s)
+      {% if ex_last.comment %}
+        <br><em>{{ ex_last.comment }}</em>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="last-session">No previous data for this exercise.</div>
+    {% endif %}
+
+    <label for="reps_{{ ex_id }}">Reps per set</label>
+    <input
+      type="text"
+      id="reps_{{ ex_id }}"
+      name="reps_{{ ex_id }}"
+      placeholder="e.g. 8 7 5"
+      autocomplete="off"
+      inputmode="numeric"
+    />
+
+    <label for="comment_{{ ex_id }}" style="margin-top:0.6rem;">Comment</label>
+    <textarea
+      id="comment_{{ ex_id }}"
+      name="comment_{{ ex_id }}"
+      placeholder="Optional notes…"
+    ></textarea>
+  </div>
+  {% endfor %}
+
+  {% if message %}
+  <div class="message" style="font-size:1rem; margin-bottom:0.5rem;">{{ message }}</div>
+  {% endif %}
+
+  <button class="btn btn-primary" type="submit"
+    onclick="this.disabled=true; this.textContent='Saving…'; this.form.submit();">
+    Save Workout
+  </button>
+</form>
+{% endif %}
+{% endblock %}

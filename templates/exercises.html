@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Exercises – Gainsbook{% endblock %}
+{% block content %}
+<h1>Exercises</h1>
+<p class="sub">Define exercises that can be added to routines.</p>
+
+<form method="post">
+  <label for="name">New exercise</label>
+  <div class="row">
+    <input type="text" id="name" name="name" placeholder="e.g. Bench Press" autocomplete="off" required />
+    <button class="btn btn-primary" type="submit">Add</button>
+  </div>
+  <div class="message">{{ message }}</div>
+</form>
+
+{% if exercises %}
+  {% for ex in exercises %}
+  <div class="card" style="margin-top:0.4rem;">
+    <div class="row">
+      <span style="flex:1; font-weight:500;">{{ ex.name }}</span>
+      <form method="post" action="/exercises/{{ ex.id }}/delete">
+        <button class="btn btn-danger btn-sm" type="submit"
+          onclick="return confirm('Delete \'{{ ex.name }}\'? It will also be removed from all routines.')">
+          Delete
+        </button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <p class="empty-state" style="margin-top:1rem;">No exercises yet.</p>
+{% endif %}
+{% endblock %}
