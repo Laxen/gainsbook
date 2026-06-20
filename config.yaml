@@ -1,5 +1,5 @@
 name: "Gainsbook"
-version: "0.1.0"
+version: "0.1.1"
 slug: "gainsbook"
 description: "Weightlifting set/rep tracker"
 startup: application
