@@ -218,60 +218,45 @@ def routine_move_exercise(r_id, ex_id, direction):
 
 # ── routes: workout ───────────────────────────────────────────────────────────
 
-@app.route("/workout/<r_id>", methods=["GET", "POST"])
+def _parse_form_entries(routine: dict) -> dict:
+    """Read reps/comment fields from the current request form for all exercises."""
+    entries = {}
+    for ex_id in routine["exercise_ids"]:
+        entries[ex_id] = {
+            "reps_str": request.form.get(f"reps_{ex_id}", "").strip(),
+            "comment": request.form.get(f"comment_{ex_id}", "").strip(),
+        }
+    return entries
+
+
+def _entries_to_session(routine: dict, entries: dict) -> list:
+    """Convert draft entries dict to the list format used in sessions.json."""
+    result = []
+    for ex_id in routine["exercise_ids"]:
+        d = entries.get(ex_id, {})
+        reps = []
+        for part in d.get("reps_str", "").split():
+            try:
+                reps.append(int(part))
+            except ValueError:
+                pass
+        result.append({"exercise_id": ex_id, "reps": reps, "comment": d.get("comment", "")})
+    return result
+
+
+@app.route("/workout/<r_id>", methods=["GET"])
 def workout(r_id):
     all_routines = load_routines()
-    exercises = load_exercises()
-    sessions = load_sessions()
-    drafts = load_drafts()
     routine = get_routine_by_id(all_routines, r_id)
     if not routine:
         return redirect(url_for("index"))
 
+    exercises = load_exercises()
+    sessions = load_sessions()
+    drafts = load_drafts()
+
     ex_map = {e["id"]: e["name"] for e in exercises}
-    message = ""
     draft_entries = drafts.get(r_id, {}).get("entries", {})
-
-    if request.method == "POST":
-        action = request.form.get("action", "finish")
-
-        # collect raw form values for every exercise
-        form_entries = {}
-        for ex_id in routine["exercise_ids"]:
-            form_entries[ex_id] = {
-                "reps_str": request.form.get(f"reps_{ex_id}", "").strip(),
-                "comment": request.form.get(f"comment_{ex_id}", "").strip(),
-            }
-
-        if action == "save":
-            drafts[r_id] = {"entries": form_entries}
-            save_drafts(drafts)
-            draft_entries = form_entries
-            message = "Progress saved."
-        else:  # finish
-            entries = []
-            for ex_id in routine["exercise_ids"]:
-                d = form_entries.get(ex_id, {})
-                reps = []
-                for part in d.get("reps_str", "").split():
-                    try:
-                        reps.append(int(part))
-                    except ValueError:
-                        pass
-                entries.append({"exercise_id": ex_id, "reps": reps, "comment": d.get("comment", "")})
-            session = {
-                "id": str(uuid.uuid4()),
-                "date": datetime.now().strftime("%Y-%m-%d"),
-                "routine_id": r_id,
-                "entries": entries,
-            }
-            sessions.append(session)
-            save_sessions(sessions)
-            drafts.pop(r_id, None)
-            save_drafts(drafts)
-            draft_entries = {}
-            message = "Workout finished!"
-
     last = {
         ex_id: last_session_for_exercise(sessions, ex_id)
         for ex_id in routine["exercise_ids"]
@@ -282,9 +267,47 @@ def workout(r_id):
         routine=routine,
         ex_map=ex_map,
         last=last,
-        message=message,
         draft_entries=draft_entries,
     )
+
+
+@app.route("/workout/<r_id>/save", methods=["POST"])
+def workout_save(r_id):
+    """Save progress as a draft and return to the workout form (PRG)."""
+    all_routines = load_routines()
+    routine = get_routine_by_id(all_routines, r_id)
+    if not routine:
+        return redirect(url_for("index"))
+
+    drafts = load_drafts()
+    drafts[r_id] = {"entries": _parse_form_entries(routine)}
+    save_drafts(drafts)
+    return redirect(url_for("workout", r_id=r_id))
+
+
+@app.route("/workout/<r_id>/finish", methods=["POST"])
+def workout_finish(r_id):
+    """Commit the workout to sessions.json, clear the draft, redirect home (PRG)."""
+    all_routines = load_routines()
+    routine = get_routine_by_id(all_routines, r_id)
+    if not routine:
+        return redirect(url_for("index"))
+
+    entries = _entries_to_session(routine, _parse_form_entries(routine))
+    sessions = load_sessions()
+    sessions.append({
+        "id": str(uuid.uuid4()),
+        "date": datetime.now().strftime("%Y-%m-%d"),
+        "routine_id": r_id,
+        "entries": entries,
+    })
+    save_sessions(sessions)
+
+    drafts = load_drafts()
+    drafts.pop(r_id, None)
+    save_drafts(drafts)
+
+    return redirect(url_for("index"))
 
 
 if __name__ == "__main__":
